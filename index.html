@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+<head>
+  <!-- manifest.jsonを呼び出しています -->
+  <link rel="manifest" href="./manifest.json">
+  <!-- PWAcompatを呼び出しています -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <script>
+    // service workerが有効なら、service-worker.js を登録します
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js').then(function() { console.log('Service Worker Registered'); });
+   }
+  </script>
+  
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="">
+  <meta property="og:type" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+  <!-- Bootstrap用JavaScriptの読み込み -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+  <meta name="theme-color" content="#fafafa">
+  
+  <style>
+	#displayId {
+		margin-right: 5px;
+    }
+	#displayPpl {
+	position: absolute;
+		left: 20px;
+    }
+    #number {
+		font-size: 200px;
+    }
+	#gray {
+		position: relative;
+		font-size: 100px;
+		top: 70px;
+    }
+	#top {
+		position: relative;
+	}
+	#rest {
+		position: absolute;
+		top: 320px;
+	}
+	#raffle {
+		position: absolute;
+		top: 370px;
+	}
+	.setting {
+		position: absolute;
+		cursor:pointer; /* マウスオーバーでカーソルの形状を変えることで、クリックできる要素だとわかりやすいように */
+		top: 470px;
+	}
+	#pop-up {
+		display: none; /* label でコントロールするので input は非表示に */
+	}
+	.overlay {
+		display: none; /* input にチェックが入るまでは非表示に */
+	}
+	#pop-up:checked + .overlay {
+		display: block;
+		z-index: 9999;
+		background-color: #00000070;
+		position: fixed;
+		width: 100%;
+		height: 100vh;
+		top: 0;
+		left: 0;
+	}
+	.window {
+		width: 90vw;
+		max-width: 380px;
+		height: 280px;
+		background-color: #ffffff;
+		border-radius: 10px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+	.text {
+		position: absolute;
+	}
+	#reInput {
+		color: red;
+	}
+  </style>
+
+</head>
+  
+<body>
+
+<div class="container">
+	
+	<div class="mt-5 d-flex justify-content-center" id="top">
+		No.<p id="displayId">0</p>さんの番号
+		<div id="rest">残りカード数：0</div>
+		<button type="button" class="btn btn-primary" id="raffle">抽選</button>
+		<label class="setting" for="pop-up" hidden>設定</label>
+	</div>
+	
+	<p class="d-flex justify-content-center" id="number">?</p>
+	
+	<p hidden id="history">/</p>
+	<p hidden id="counter">0</p>
+	<p hidden id="displayPpl">0</p>
+
+
+	
+	<input type="checkbox" checked id="pop-up">
+	<div class="overlay">
+		<div class="window">
+			<div class="text">
+				<div class="row align-items-center">
+					<div class="col">人数</div>
+					<input type="number" value="" class="col form-control" id="people">
+				</div>
+				
+				<div class="mt-3 row align-items-center">
+					<div class="col">No.</div>
+					<input type="number" value="" class="col form-control" id="id">
+				</div>
+				
+				<div class="mt-3 d-flex justify-content-center" id="reInput">&ensp;</div>
+				
+				<div class="mt-4 d-flex justify-content-center">
+					<button type="button" class="btn btn-primary" id="decide">決定</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<script>
+	const ary = [
+		18,20,60,63,26,91,29,6,5,54,33,49,57,31,17,70,88,35,21,75,46,65,47,76,30,9,92,27,78,12,100,99,3,22,61,25,42,69,72,32,74,14,15,80,41,84,59,90,93,68,95,34,38,96,44,85,64,24,40,2,8,62,13,73,86,48,28,66,36,10,16,87,23,58,77,94,79,19,50,53,43,83,56,97,82,37,55,81,67,45,11,51,7,4,52,71,89,98,39,1
+	];
+
+	const $popUp = document.getElementById("pop-up");
+	const $people = document.getElementById("people");
+	const $id = document.getElementById("id");
+	const $reInput = document.getElementById("reInput");
+	const $decideBtn = document.getElementById("decide");
+	const $raffleBtn = document.getElementById("raffle");
+	const $num = document.getElementById("number");
+	const $rest = document.getElementById("rest")
+	const $history = document.getElementById("history");
+	const $counter = document.getElementById("counter");
+
+	
+	$decideBtn.addEventListener("click",() => {
+		let people = Number($people.value);
+		let id = Number($id.value);
+	
+		if(people < 1 || id < 1){
+			$reInput.innerHTML = "1以上の数を入力してください";
+			return;
+		}
+		if(id > people){
+			$reInput.innerHTML = "No.は人数より小さくしてください";
+			return;
+		};
+		
+		$popUp.checked = false;
+		document.getElementById("displayId").innerHTML = $id.value;
+		document.getElementById("displayPpl").innerHTML = $people.value +"人";
+		
+		let card = (100 - id - ((100 - id) % people)) / people + 1;
+		$rest.innerHTML = "残りカード数：" + card;
+	});
+	
+	$raffleBtn.addEventListener("click",() => {
+		function sleep(waitSec, callbackFunc) {
+			document.getElementById("displayId").innerHTML = $id.value;
+
+			let spanedSec = 0;
+			const waitFunc = function () {
+				let x = Math.floor(Math.random() * 100) + 1;
+				$num.innerHTML = "<font color=\"gray\" id=\"gray\">" + x + "</font>";
+				
+				spanedSec++;
+		 
+				if (spanedSec >= waitSec) {
+					if (callbackFunc) callbackFunc();
+					return;
+				}
+		 
+				clearTimeout(ID);
+				ID = setTimeout(waitFunc, 50);
+			};
+		
+			let ID = setTimeout(waitFunc, 0);
+		 
+		};
+		 
+		sleep(6, function() {
+			let people = Number($people.value);
+			let id = Number($id.value);
+			let history = $history.textContent;
+			let count = Number($counter.textContent);
+			
+			let card = (100 - id - ((100 - id) % people)) / people + 1;
+			
+			let index = id - 1 + people * count;
+			//console.log(c, count);
+			
+			if(count >= card){
+				$num.innerHTML = "<font color=\"gray\" id=\"gray\">終わり</font>";
+				return;
+			};
+			
+			//console.log(c, count);
+			
+			$num.innerHTML = ary[index];
+
+			count++;
+			$counter.innerHTML = count;
+
+			$rest.innerHTML = "残りカード数：" + (card - count);
+
+			$history.innerHTML = history;
+		});
+	});
+</script>
+
+<script async src="https://cdn.jsdelivr.net/npm/pwacompat@2.0.6/pwacompat.min.js"
+integrity="sha384-GOaSLecPIMCJksN83HLuYf9FToOiQ2Df0+0ntv7ey8zjUHESXhthwvq9hXAZTifA"
+crossorigin="anonymous"></script>
+
+</body>
+</html>
